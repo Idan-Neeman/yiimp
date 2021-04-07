@@ -98,7 +98,7 @@ bool coind_validate_user_address(YAAMP_COIND *coind, char* const address)
 	}
 
 	bool isvalid = json_get_bool(json_result, "isvalid");
-	if(!isvalid) stratumlog("%s: %s user address %s is not valid.\n", g_stratum_algo, coind->symbol, address);
+	// if(!isvalid) stratumlog("%s: %s user address %s is not valid.\n", g_stratum_algo, coind->symbol, address);
 
 	json_value_free(json);
 
@@ -115,8 +115,11 @@ bool coind_validate_address(YAAMP_COIND *coind)
 	sprintf(params, "[\"%s\"]", coind->wallet);
 
 	json_value *json;
-	bool getaddressinfo = false;
-	json = rpc_call(&coind->rpc, "validateaddress", params);
+    bool getaddressinfo = ((strcmp(coind->symbol,"DGB") == 0) || (strcmp(coind->symbol2, "DGB") == 0) || (strcmp(coind->symbol,"BTCIL") == 0) || (strcmp(coind->symbol2, "BTCIL") == 0) || (strcmp(coind->symbol,"CTC") == 0) || (strcmp(coind->symbol2, "CTC") == 0) || (strcmp(coind->symbol,"UQB") == 0) || (strcmp(coind->symbol2, "UQB") == 0) || (strcmp(coind->symbol,"XMY") == 0) || (strcmp(coind->symbol2, "XMY") == 0) || (strcmp(coind->symbol,"SCHO") == 0) || (strcmp(coind->symbol2, "SCHO") == 0) || (strcmp(coind->symbol,"BRTX") == 0) || (strcmp(coind->symbol2, "BRTX") == 0) || (strcmp(coind->symbol,"BTC") == 0) || (strcmp(coind->symbol2, "BTC") == 0));	
+	if(getaddressinfo)
+		json = rpc_call(&coind->rpc, "getaddressinfo", params);
+	else
+		json = rpc_call(&coind->rpc, "validateaddress", params);
 	if(!json) return false;
 
 	json_value *json_result = json_get_object(json, "result");
@@ -126,20 +129,6 @@ bool coind_validate_address(YAAMP_COIND *coind)
 		return false;
 	}
 
-	if(!json_get_bool(json_result, "ismine"))
-	{
-		stratumlog("%s wallet is using getaddressinfo.\n", coind->name);
-		getaddressinfo = true;
-		json = rpc_call(&coind->rpc, "getaddressinfo", params);
-
-		json_result = json_get_object(json, "result");
-		if(!json_result)
-		{
-			json_value_free(json);
-			return false;
-		}
-	}
-	
 	bool isvalid = getaddressinfo || json_get_bool(json_result, "isvalid");
 	if(!isvalid) stratumlog("%s wallet %s is not valid.\n", coind->name, coind->wallet);
 
@@ -190,9 +179,9 @@ void coind_init(YAAMP_COIND *coind)
 	bool valid = coind_validate_address(coind);
 	if(valid) return;
 
-	sprintf(params, "[\"legacy\"]", account);
+	sprintf(params, "[\"%s\"]", account);
 
-	json_value *json = rpc_call(&coind->rpc, "getrawchangeaddress", params);
+	json_value *json = rpc_call(&coind->rpc, "getaccountaddress", params);
 	if(!json)
 	{
 		json = rpc_call(&coind->rpc, "getaddressesbyaccount", params);
@@ -207,6 +196,70 @@ void coind_init(YAAMP_COIND *coind)
 		}
 	}
 
+	    bool is_dgb = ((strcmp(coind->symbol,"DGB") == 0) || (strcmp(coind->symbol2, "DGB") == 0));
+
+    if (is_dgb) {
+        if (json) json_value_free(json);
+
+        json = rpc_call(&coind->rpc, "getnewaddress", params);
+    }
+	
+	    bool is_btc = ((strcmp(coind->symbol,"BTC") == 0) || (strcmp(coind->symbol2, "BTC") == 0));
+
+    if (is_btc) {
+        if (json) json_value_free(json);
+
+        json = rpc_call(&coind->rpc, "getnewaddress", params);
+    }
+	
+		    bool is_brtx = ((strcmp(coind->symbol,"BRTX") == 0) || (strcmp(coind->symbol2, "BRTX") == 0));
+
+    if (is_brtx) {
+        if (json) json_value_free(json);
+
+        json = rpc_call(&coind->rpc, "getnewaddress", params);
+    }
+	
+		    bool is_xmy = ((strcmp(coind->symbol,"XMY") == 0) || (strcmp(coind->symbol2, "XMY") == 0));
+
+    if (is_xmy) {
+        if (json) json_value_free(json);
+
+        json = rpc_call(&coind->rpc, "getnewaddress", params);
+    }	
+	
+		    bool is_btcil = ((strcmp(coind->symbol,"BTCIL") == 0) || (strcmp(coind->symbol2, "BTCIL") == 0));
+
+    if (is_btcil) {
+        if (json) json_value_free(json);
+
+        json = rpc_call(&coind->rpc, "getnewaddress", params);
+    }	
+	
+		    bool is_uqb = ((strcmp(coind->symbol,"UQB") == 0) || (strcmp(coind->symbol2, "UQB") == 0));
+
+    if (is_uqb) {
+        if (json) json_value_free(json);
+
+        json = rpc_call(&coind->rpc, "getnewaddress", params);
+    }
+	
+		    bool is_ctc = ((strcmp(coind->symbol,"CTC") == 0) || (strcmp(coind->symbol2, "CTC") == 0));
+
+    if (is_ctc) {
+        if (json) json_value_free(json);
+
+        json = rpc_call(&coind->rpc, "getnewaddress", params);
+    }
+	
+		    bool is_scho = ((strcmp(coind->symbol,"SCHO") == 0) || (strcmp(coind->symbol2, "SCHO") == 0));
+
+    if (is_scho) {
+        if (json) json_value_free(json);
+
+        json = rpc_call(&coind->rpc, "getnewaddress", params);
+    }
+	
 	if (json->u.object.values[0].value->type == json_string) {
 		strcpy(coind->wallet, json->u.object.values[0].value->u.string.ptr);
 	}
